@@ -8,9 +8,12 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.annotation.DirtiesContext;
 
 import com.jayway.jsonpath.DocumentContext;
 import com.jayway.jsonpath.JsonPath;
+
+import net.minidev.json.JSONArray;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,9 +47,20 @@ class CashCardApplicationTests {
 	void shouldReturnAllCashCardsWhenListIsRequested() {
 		ResponseEntity<String> response = restTemplate.getForEntity("/cashcards", String.class);
 		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		int cashcardCount = documentContext.read("$.length()");
+		assertThat(cashcardCount).isEqualTo(3);
+
+		JSONArray idArray = documentContext.read("$..id");
+		assertThat(idArray).containsExactlyInAnyOrder(99, 100, 101);
+
+		JSONArray amountArray = documentContext.read("$..amount");
+		assertThat(amountArray).containsExactlyInAnyOrder(123.45, 1.00, 150.00);
 	}
 
 	@Test
+	@DirtiesContext
 	void shouldCreateANewCashCard() {
 		CashCard newCashCard = new CashCard(null, 250.00);
 		ResponseEntity<Void> createResponse = restTemplate.postForEntity("/cashcards", newCashCard, Void.class);
