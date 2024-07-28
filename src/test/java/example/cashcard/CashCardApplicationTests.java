@@ -70,6 +70,19 @@ class CashCardApplicationTests {
 	}
 
 	@Test
+	void shouldReturnASortedPageOfCashCards() {
+		ResponseEntity<String> response = restTemplate.getForEntity("/cashcards?page=0&size=1&sort=amount,desc", String.class);
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+
+		DocumentContext documentContext = JsonPath.parse(response.getBody());
+		JSONArray page = documentContext.read("$[*]");
+		assertThat(page.size()).isEqualTo(1);
+
+		Double amount = documentContext.read("$[0].amount");
+		assertThat(amount).isEqualTo(150.00);
+	}
+
+	@Test
 	@DirtiesContext
 	void shouldCreateANewCashCard() {
 		CashCard newCashCard = new CashCard(null, 250.00);
